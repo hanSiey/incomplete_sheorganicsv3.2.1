@@ -1,0 +1,138 @@
+{% extends 'templates/store_main.html' %}
+{% load static %}
+{% block content %}
+<div>
+     <div class="row">
+		<div class="col-lg-6">
+			<div class="box-element" id="form-wrapper">
+				<form id="form">
+					<div class="container">
+					<div id="user-info" class="row">
+						<div class="form-field col-md-6 col-12">
+							{{form.name}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.surname}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.email}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.phone}}
+						</div>
+					</div>
+						<br/>
+						<hr>
+						<p>Delivery Information:</p>
+						<hr>
+					<div id="shipping-info" class="row">
+						<div class="form-field col-md-6 col-12">
+							{{form.address}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.city}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.state}}
+						</div>
+						<div class="form-field col-md-6 col-12">
+							{{form.zipcode}}
+						</div>
+					</div>
+					</div>
+					<hr>
+					<input id="form-button" class="btn btn-success btn-block" type="submit" value="Continue">
+				</form>
+			</div>
+			
+		</div>
+
+		<div class="col-lg-6">
+			<div class="box-element">
+				<a  class="btn btn-outline-dark" style="color:#333333;" href="{% url 'cart' %}">&#x2190; Back to Cart</a>
+				<hr>
+				<h3>Order Summary</h3>
+				<hr>
+				{% for item in items %}
+				<div class="cart-row">
+					<div style="flex:2"><img class="row-image" src="{{item.product.imageURL}}"></div>
+					<div style="flex:2">
+					<p>{{item.product.name}}</p>
+					<p>({{item.product.measurement}})</p>
+					</div>
+					<div style="flex:1"><p>R{{item.product.price|floatformat:2}}</p></div>
+					<div style="flex:1"><p>x{{item.quantity}}</p></div>
+				</div>
+				{% endfor %}
+				<h5>Items:   {{order.get_cart_items}}</h5>
+				<h5>Total:   R{{order.get_cart_total|floatformat:2}}</h5>
+			</div>
+		</div>
+	</div>
+
+</div>
+	<script type="text/javascript">
+		var total = {{order.get_cart_total|floatformat:2}}
+
+		if (user != 'AnonymousUser'){
+		 	document.getElementById('user-info').innerHTML = ''
+		 }
+
+
+		var form = document.getElementById('form')
+		form.addEventListener('submit', function(e){
+	    	e.preventDefault()
+	    	console.log('Form Submitted...')
+			submitFormData()
+	    })
+
+
+	    function submitFormData(){
+
+	    	var userFormData = {
+				'name':null,
+				'surname':null,
+				'email':null,
+				'phone':null,
+				'total':total,
+			}
+
+			var shippingInfo = {
+				'address':form.address.value,
+				'city':form.city.value,
+				'state':form.state.value,
+				'zipcode':form.zipcode.value,
+			}
+
+	    	if (user == 'AnonymousUser'){
+	    		userFormData.name = form.name.value
+				userFormData.surname = form.surname.value
+				userFormData.phone = form.phone.value
+	    		userFormData.email = form.email.value
+	    	}
+
+	    	var url = "process_order"
+	    	fetch(url, {
+	    		method:'POST',
+	    		headers:{
+	    			'Content-Type':'applicaiton/json',
+	    			'X-CSRFToken':csrftoken,
+	    		}, 
+	    		body:JSON.stringify({'form':userFormData, 'shipping':shippingInfo}),
+	    		
+	    	})
+	    	.then((response) => response.json())
+	    	.then((data) => {
+				console.log('Success:', data);
+				alert('Transaction completed');  
+
+				cart = {}
+				document.cookie ='cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
+				window.location.href = "{% url 'store' %}"
+
+				})
+	    }
+	</script>
+<br/>
+{% endblock content %}
